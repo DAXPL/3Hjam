@@ -12,10 +12,12 @@ public class Player : MonoBehaviour
 
     [SerializeField] private float playerSpeed = 1f;
 
-    [SerializeField] private Vector3 movementInput;
-    [SerializeField] private Vector2 mouseRaw;
+    private Vector3 movementInput;
+    private Vector2 mouseRaw;
 
     float rotX;
+    bool canMove = true;
+    [SerializeField] private GameObject deathScreen;
 
     private void Start()
     {
@@ -24,10 +26,15 @@ public class Player : MonoBehaviour
         {
             Debug.LogWarning("No CharacterController!");
         }
+        deathScreen.SetActive(false);
+
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible= false;
     }
 
     void Update()
     {
+        if(canMove == false) { return; }
         if(controller)
         {
             Vector3 movement = transform.right * movementInput.x + transform.forward * movementInput.z;
@@ -42,7 +49,7 @@ public class Player : MonoBehaviour
             rotX = Mathf.Clamp(rotX, -90f, 90f);
             cam.transform.localRotation = Quaternion.Euler(rotX, 0f, 0f);
 
-            transform.Rotate(Vector3.up * mouseX);
+            transform.Rotate(Vector3.up * mouseX); 
         }
     }
 
@@ -56,5 +63,27 @@ public class Player : MonoBehaviour
     public void InputMouse(InputAction.CallbackContext ctx)
     {
         mouseRaw = ctx.ReadValue<Vector2>();
+    }
+
+    public void Interact(InputAction.CallbackContext ctx)
+    {
+        if (ctx.started)
+        {
+            RaycastHit hit;
+            if(Physics.Raycast(cam.transform.position,cam.transform.forward,out hit, 2137))
+            {
+                //Debug.Log(hit.transform.name);
+                if (hit.transform.TryGetComponent(out Interact interacted))
+                {
+                    interacted.Interaction();
+                }
+            }
+        }
+    }
+
+    public void Death()
+    {
+        canMove = false;
+        deathScreen.SetActive(true);
     }
 }
