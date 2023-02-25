@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class Player : MonoBehaviour
 {
@@ -18,11 +19,17 @@ public class Player : MonoBehaviour
     float rotX;
     bool canMove = true;
     [SerializeField] private GameObject deathScreen;
-
+    [SerializeField] private GameObject winScreen;
+    float nextStep = 0f;
+    public float stepOffset = 1f;
+    private AudioSource ass;
+    [SerializeField] private AudioClip[] steps;
+    [SerializeField] private AudioClip death;
     private void Start()
     {
         controller = GetComponent<CharacterController>();
-        if(controller==null)
+        ass = GetComponent<AudioSource>();
+        if (controller==null)
         {
             Debug.LogWarning("No CharacterController!");
         }
@@ -39,6 +46,11 @@ public class Player : MonoBehaviour
         {
             Vector3 movement = transform.right * movementInput.x + transform.forward * movementInput.z;
             controller.Move(movement * Time.deltaTime);
+            if(movement.magnitude > 0.1f && Time.time >= nextStep)
+            {
+                nextStep = Time.time + stepOffset;
+                ass.PlayOneShot(steps[Random.Range(0,steps.Length)]) ;
+            }
         }
         if (cam)
         {
@@ -83,7 +95,21 @@ public class Player : MonoBehaviour
 
     public void Death()
     {
+        ass.PlayOneShot(death);
         canMove = false;
         deathScreen.SetActive(true);
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+    public void Win()
+    {
+        canMove = false;
+        winScreen.SetActive(true);
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+    public void TryAgain()
+    {
+        SceneManager.LoadScene(0);
     }
 }
